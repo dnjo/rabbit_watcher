@@ -8,7 +8,12 @@ describe RabbitWatcher::Client do
   let(:queues) { %w(queue1 queue2) }
   let(:username) { 'testuser' }
   let(:password) { 'testpass' }
-  let(:client) { init_client }
+  let(:client) do
+    RabbitWatcher::Client.new uri: uri,
+                              vhost: vhost,
+                              username: username,
+                              password: password
+  end
 
   describe '#status' do
     it 'returns the status of queues' do
@@ -29,13 +34,6 @@ describe RabbitWatcher::Client do
       expect { client.status queues }
         .to raise_error RabbitWatcher::Client::InvalidResponse
     end
-  end
-
-  def init_client
-    RabbitWatcher::Client.new uri: uri,
-                              vhost: vhost,
-                              username: username,
-                              password: password
   end
 
   def stub_rabbit_request(status, body)
