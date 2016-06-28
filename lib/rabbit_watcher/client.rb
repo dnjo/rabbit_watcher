@@ -11,10 +11,14 @@ module RabbitWatcher
       @vhost = opts[:vhost]
     end
 
-    def status(queue)
-      response = get queue
-      validate_response response
-      parse_status response.parsed_response
+    def status(queues)
+      queues = [queues] unless queues.is_a? Array
+      queues.each_with_object({}) do |queue, status_hash|
+        response = get queue
+        validate_response response
+        queue_status = parse_status response.parsed_response
+        status_hash[queue] = queue_status
+      end
     end
 
     private
