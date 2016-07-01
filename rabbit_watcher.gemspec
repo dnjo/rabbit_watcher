@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "webmock", "~> 2.0.3"
 
   spec.add_dependency "httparty", "~> 0.13.7"
+  spec.add_dependency "rufus-scheduler", "~> 3.2.1"
 end
