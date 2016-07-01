@@ -46,8 +46,8 @@ module RabbitWatcher
 
     def self.parse_status(body)
       {
-        message_count: body['messages_ready'],
-        consumer_count: body['consumers']
+        messages: body['messages_ready'],
+        consumers: body['consumers']
       }
     end
     private_class_method :parse_status

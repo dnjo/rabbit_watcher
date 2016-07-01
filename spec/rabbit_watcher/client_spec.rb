@@ -17,10 +17,10 @@ describe RabbitWatcher::Client do
       }.to_json
       stub_rabbit_request 200, body
       status = request_status
-      expect(status['queue1'][:message_count]).to eq 100
-      expect(status['queue1'][:consumer_count]).to eq 4
-      expect(status['queue2'][:message_count]).to eq 100
-      expect(status['queue2'][:consumer_count]).to eq 4
+      expect(status['queue1'][:messages]).to eq 100
+      expect(status['queue1'][:consumers]).to eq 4
+      expect(status['queue2'][:messages]).to eq 100
+      expect(status['queue2'][:consumers]).to eq 4
     end
 
     it 'throws an error on invalid response' do
