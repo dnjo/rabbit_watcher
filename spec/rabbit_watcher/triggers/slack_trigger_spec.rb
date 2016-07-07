@@ -17,18 +17,26 @@ describe RabbitWatcher::Triggers::SlackTrigger do
                              threshold_options: threshold_options,
                              triggers: [trigger]
   end
+  let(:trigger_args) do
+    {
+      queue: queue,
+      host: 'host',
+      value: :messages,
+      count: 2
+    }
+  end
 
   describe '#handle_trigger' do
     it 'should send a JSON message to Slack' do
       mock_httparty
-      trigger.handle_trigger queue, :messages, 2
+      trigger.handle_trigger trigger_args
     end
   end
 
   describe '#handle_reset' do
     it 'should send a JSON message to Slack' do
       mock_httparty
-      trigger.handle_reset queue, :messages, 1
+      trigger.handle_reset trigger_args
     end
   end
 

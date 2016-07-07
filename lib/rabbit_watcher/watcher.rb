@@ -4,25 +4,29 @@ module RabbitWatcher
   module Watcher
     def self.watch(host)
       status = get_status host
-      check_queues host.queues, status
+      check_queues host, status
     end
 
-    def self.check_queues(queues, status)
-      queues.each do |queue|
+    def self.check_queues(host, status)
+      host.queues.each do |queue|
         [:messages, :consumers].each do |value|
           count = status[queue.name][value]
-          check_queue_value queue, value, count
+          queue_status = build_queue_status queue, host, value, count
+          check_queue_value queue_status
         end
       end
     end
     private_class_method :check_queues
 
-    def self.check_queue_value(queue, value, count)
+    def self.check_queue_value(status)
+      queue = status[:queue]
+      value = status[:value]
+      count = status[:count]
       if count_ok? queue, value, count
         queue.update_timestamp value
-        reset queue, value, count
+        reset status
       elsif !timestamp_ok? queue, value, queue.timestamps[value]
-        trigger queue, value, count
+        trigger status
       end
     end
     private_class_method :check_queue_value
@@ -45,15 +49,25 @@ module RabbitWatcher
     end
     private_class_method :timestamp_ok?
 
-    def self.trigger(queue, value, count)
-      queue.triggers.each { |t| t.trigger queue, value, count }
+    def self.trigger(status)
+      status[:queue].triggers.each { |t| t.trigger status }
     end
     private_class_method :trigger
 
-    def self.reset(queue, value, count)
-      queue.triggers.each { |t| t.reset queue, value, count }
+    def self.reset(status)
+      status[:queue].triggers.each { |t| t.reset status }
     end
     private_class_method :reset
+
+    def self.build_queue_status(queue, host, value, count)
+      {
+        queue: queue,
+        host: host,
+        value: value,
+        count: count
+      }
+    end
+    private_class_method :build_queue_status
 
     def self.get_status(host)
       queue_names = host.queues.map(&:name)

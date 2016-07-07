@@ -8,14 +8,20 @@ module RabbitWatcher
         @url = url
       end
 
-      def handle_trigger(queue, value, count)
+      def handle_trigger(status)
+        queue = status[:queue]
+        value = status[:value]
+        count = status[:count]
         title = MessageHelper.trigger_title queue, value
         text = MessageHelper.trigger_text queue, value, count
         message = build_message title, text, :trigger
         post message
       end
 
-      def handle_reset(queue, value, count)
+      def handle_reset(status)
+        queue = status[:queue]
+        value = status[:value]
+        count = status[:count]
         title = MessageHelper.reset_title queue, value
         text = MessageHelper.reset_text count
         message = build_message title, text, :reset

@@ -3,14 +3,9 @@ require 'rabbit_watcher/watcher'
 require 'rabbit_watcher/queue'
 require 'rabbit_watcher/host'
 require 'rabbit_watcher/client'
+require 'rabbit_watcher/trigger'
 
 describe RabbitWatcher::Watcher do
-  class TestTrigger
-    def trigger(queue, value, count); end
-
-    def reset(queue, vaue, count); end
-  end
-
   let(:uri) { 'http://rabbituri:15672' }
   let(:username) { 'testuser' }
   let(:password) { 'testpass' }
@@ -18,7 +13,7 @@ describe RabbitWatcher::Watcher do
   let(:queue_name) { 'queue1' }
   let(:message_threshold) { 100 }
   let(:consumer_threshold) { 0 }
-  let(:trigger) { TestTrigger.new }
+  let(:trigger) { RabbitWatcher::Trigger.new }
 
   before :each do
     threshold_options = {
@@ -78,10 +73,10 @@ describe RabbitWatcher::Watcher do
     it 'calls queue triggers when outside time threshold' do
       expect(trigger)
         .to(receive(:trigger))
-        .with @queue, :messages, message_threshold
+        .with trigger_args(:messages, message_threshold)
       expect(trigger)
         .to(receive(:trigger))
-        .with @queue, :consumers, consumer_threshold
+        .with trigger_args(:consumers, consumer_threshold)
       now = Time.now
       one_hour_ago = Time.now - 3600
       stub_now one_hour_ago
@@ -96,12 +91,21 @@ describe RabbitWatcher::Watcher do
       stub_client message_threshold - 1, consumer_threshold + 1
       expect(trigger)
         .to(receive(:reset))
-        .with @queue, :messages, message_threshold - 1
+        .with trigger_args(:messages, message_threshold - 1)
       expect(trigger)
         .to(receive(:reset))
-        .with @queue, :consumers, consumer_threshold + 1
+        .with trigger_args(:consumers, consumer_threshold + 1)
       RabbitWatcher::Watcher.watch @host
     end
+  end
+
+  def trigger_args(value, count)
+    {
+      host: @host,
+      queue: @queue,
+      value: value,
+      count: count
+    }
   end
 
   def client_status(message_threshold, consumer_threshold)
