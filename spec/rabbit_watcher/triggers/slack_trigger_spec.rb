@@ -17,10 +17,15 @@ describe RabbitWatcher::Triggers::SlackTrigger do
                              threshold_options: threshold_options,
                              triggers: [trigger]
   end
+  let(:host) do
+    RabbitWatcher::Host.new uri: 'http://testurl.com',
+                            vhost: '%2F',
+                            queues: [queue]
+  end
   let(:trigger_args) do
     {
       queue: queue,
-      host: 'host',
+      host: host,
       value: :messages,
       count: 2
     }

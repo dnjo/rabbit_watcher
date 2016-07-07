@@ -10,21 +10,23 @@ module RabbitWatcher
 
       def handle_trigger(status)
         queue = status[:queue]
+        host = status[:host]
         value = status[:value]
         count = status[:count]
         title = MessageHelper.trigger_title queue, value
         text = MessageHelper.trigger_text queue, value, count
-        message = build_message title, text, :trigger
+        message = build_message title, text, :trigger, host, queue
         post message
       end
 
       def handle_reset(status)
         queue = status[:queue]
+        host = status[:host]
         value = status[:value]
         count = status[:count]
         title = MessageHelper.reset_title queue, value
         text = MessageHelper.reset_text count
-        message = build_message title, text, :reset
+        message = build_message title, text, :reset, host, queue
         post message
       end
 
@@ -38,13 +40,15 @@ module RabbitWatcher
         HTTParty.post @url, post_options
       end
 
-      def build_message(title, text, message_type)
+      def build_message(title, text, message_type, host, queue)
+        title_link = queue_url host, queue
         {
           attachments: [
             {
               fallback: title,
               color: message_colors[message_type],
               title: title,
+              title_link: title_link,
               text: text
             }
           ]
@@ -56,6 +60,12 @@ module RabbitWatcher
           trigger: '#ce0814',
           reset: '#36a64f'
         }
+      end
+
+      def queue_url(host, queue)
+        uri = host.uri
+        vhost = host.vhost
+        "#{uri}/#/queues/#{vhost}/#{queue.name}"
       end
     end
   end
