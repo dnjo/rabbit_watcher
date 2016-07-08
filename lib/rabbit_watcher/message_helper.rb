@@ -1,12 +1,9 @@
 module RabbitWatcher
   module MessageHelper
-    def self.title(trigger_type, status)
-      case trigger_type
-      when :trigger
-        trigger_title status
-      when :reset
-        reset_title status
-      end
+    def self.title(_trigger_type, status)
+      host = status[:host]
+      queue = status[:queue]
+      "#{host.uri} (#{queue.name})"
     end
 
     def self.text(trigger_type, status)
@@ -18,50 +15,30 @@ module RabbitWatcher
       end
     end
 
-    def self.trigger_title(status)
-      queue = status[:queue]
-      value = status[:value]
-      case value
-      when :messages
-        "[#{queue.name}] Too many messages"
-      when :consumers
-        "[#{queue.name}] Not enough consumers"
-      end
-    end
-    private_class_method :trigger_title
-
     def self.trigger_text(status)
       queue = status[:queue]
       value = status[:value]
-      count = status[:count]
       count_threshold = count_threshold value,
                                         queue.threshold_options[value][:count]
       time_threshold = queue.threshold_options[value][:time]
       time = format_time time_threshold
       case value
       when :messages
-        "Message count > #{count_threshold} for #{time}. Current count: #{count}"
+        "Message count > #{count_threshold} for #{time}"
       when :consumers
-        "Consumer count < #{count_threshold} for #{time}. Current count: #{count}"
+        "Consumer count < #{count_threshold} for #{time}"
       end
     end
     private_class_method :trigger_text
 
-    def self.reset_title(status)
-      queue = status[:queue]
+    def self.reset_text(status)
       value = status[:value]
       case value
       when :messages
-        "[#{queue.name}] Message count is below threshold"
+        'Message count is below threshold'
       when :consumers
-        "[#{queue.name}] Consumer count is above threshold"
+        'Consumer count is above threshold'
       end
-    end
-    private_class_method :reset_title
-
-    def self.reset_text(status)
-      count = status[:count]
-      "Current count: #{count}"
     end
     private_class_method :reset_text
 

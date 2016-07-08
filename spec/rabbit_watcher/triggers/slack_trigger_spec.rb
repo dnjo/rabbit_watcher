@@ -11,7 +11,7 @@ describe RabbitWatcher::Triggers::SlackTrigger do
       }
     }
   end
-  let(:trigger) { RabbitWatcher::Triggers::SlackTrigger.new url }
+  let(:trigger) { RabbitWatcher::Triggers::SlackTrigger.new url: url }
   let(:queue) do
     RabbitWatcher::Queue.new name: 'queue1',
                              threshold_options: threshold_options,

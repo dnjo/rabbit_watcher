@@ -1,11 +1,14 @@
 require 'httparty'
 require 'rabbit_watcher/message_helper'
+require 'rabbit_watcher/markdown_helper'
 
 module RabbitWatcher
   module Triggers
     class SlackTrigger < Trigger
-      def initialize(url)
-        @url = url
+      def initialize(opts)
+        @url = opts[:url]
+        @username = opts[:username] || 'Rabbit Watcher'
+        @icon_emoji = opts[:icon_emoji] || ':rabbit2:'
       end
 
       def handle_trigger(status)
@@ -35,20 +38,32 @@ module RabbitWatcher
         queue = status[:queue]
         host = status[:host]
         title = MessageHelper.title trigger_type, status
-        text = MessageHelper.text trigger_type, status
+        text = build_slack_text trigger_type, status
         build_slack_message title, text, trigger_type, host, queue
+      end
+
+      def build_slack_text(trigger_type, status)
+        queue = status[:queue]
+        count = status[:count]
+        trigger_text = MessageHelper.text trigger_type, status
+        prefixes = ['Queue:', 'Trigger:', 'Current count:']
+        texts = [queue.name, trigger_text, count]
+        MarkdownHelper.bold_prefixes prefixes, texts
       end
 
       def build_slack_message(title, text, trigger_type, host, queue)
         title_link = queue_url host, queue
         {
+          username: @username,
+          icon_emoji: @icon_emoji,
           attachments: [
             {
               fallback: title,
               color: message_colors[trigger_type],
               title: title,
               title_link: title_link,
-              text: text
+              text: text,
+              mrkdwn_in: ['text']
             }
           ]
         }
