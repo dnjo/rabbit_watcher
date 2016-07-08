@@ -21,13 +21,9 @@ module RabbitWatcher
       count_threshold = count_threshold value,
                                         queue.threshold_options[value][:count]
       time_threshold = queue.threshold_options[value][:time]
-      time = format_time time_threshold
-      case value
-      when :messages
-        "Message count > #{count_threshold} for #{time}"
-      when :consumers
-        "Consumer count < #{count_threshold} for #{time}"
-      end
+      time_text = format_time_text time_threshold
+      value_text = format_value_text value, count_threshold
+      [value_text, time_text].reject(&:empty?).join ' '
     end
     private_class_method :trigger_text
 
@@ -51,6 +47,23 @@ module RabbitWatcher
       end
     end
     private_class_method :count_threshold
+
+    def self.format_time_text(time_threshold)
+      return '' unless time_threshold > 0
+      time = format_time time_threshold
+      "for #{time}"
+    end
+    private_class_method :format_time_text
+
+    def self.format_value_text(value, count_threshold)
+      case value
+      when :messages
+        "Message count > #{count_threshold}"
+      when :consumers
+        "Consumer count < #{count_threshold}"
+      end
+    end
+    private_class_method :format_value_text
 
     def self.format_time(seconds)
       if seconds >= 60

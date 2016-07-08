@@ -46,7 +46,7 @@ module RabbitWatcher
         queue = status[:queue]
         count = status[:count]
         trigger_text = MessageHelper.text trigger_type, status
-        prefixes = ['Queue:', 'Trigger:', 'Current count:']
+        prefixes = %w(Queue: Trigger: Count:)
         texts = [queue.name, trigger_text, count]
         MarkdownHelper.bold_prefixes prefixes, texts
       end
