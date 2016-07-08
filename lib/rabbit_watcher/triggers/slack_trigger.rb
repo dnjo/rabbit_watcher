@@ -9,28 +9,19 @@ module RabbitWatcher
       end
 
       def handle_trigger(status)
-        queue = status[:queue]
-        host = status[:host]
-        value = status[:value]
-        count = status[:count]
-        title = MessageHelper.trigger_title queue, value
-        text = MessageHelper.trigger_text queue, value, count
-        message = build_message title, text, :trigger, host, queue
-        post message
+        build_and_post :trigger, status
       end
 
       def handle_reset(status)
-        queue = status[:queue]
-        host = status[:host]
-        value = status[:value]
-        count = status[:count]
-        title = MessageHelper.reset_title queue, value
-        text = MessageHelper.reset_text count
-        message = build_message title, text, :reset, host, queue
-        post message
+        build_and_post :reset, status
       end
 
       private
+
+      def build_and_post(trigger_type, status)
+        message = build_post_message trigger_type, status
+        post message
+      end
 
       def post(message)
         post_options = {
@@ -40,13 +31,21 @@ module RabbitWatcher
         HTTParty.post @url, post_options
       end
 
-      def build_message(title, text, message_type, host, queue)
+      def build_post_message(trigger_type, status)
+        queue = status[:queue]
+        host = status[:host]
+        title = MessageHelper.title trigger_type, status
+        text = MessageHelper.text trigger_type, status
+        build_slack_message title, text, trigger_type, host, queue
+      end
+
+      def build_slack_message(title, text, trigger_type, host, queue)
         title_link = queue_url host, queue
         {
           attachments: [
             {
               fallback: title,
-              color: message_colors[message_type],
+              color: message_colors[trigger_type],
               title: title,
               title_link: title_link,
               text: text

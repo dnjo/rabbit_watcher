@@ -1,6 +1,26 @@
 module RabbitWatcher
   module MessageHelper
-    def self.trigger_title(queue, value)
+    def self.title(trigger_type, status)
+      case trigger_type
+      when :trigger
+        trigger_title status
+      when :reset
+        reset_title status
+      end
+    end
+
+    def self.text(trigger_type, status)
+      case trigger_type
+      when :trigger
+        trigger_text status
+      when :reset
+        reset_text status
+      end
+    end
+
+    def self.trigger_title(status)
+      queue = status[:queue]
+      value = status[:value]
       case value
       when :messages
         "[#{queue.name}] Too many messages"
@@ -8,21 +28,28 @@ module RabbitWatcher
         "[#{queue.name}] Not enough consumers"
       end
     end
+    private_class_method :trigger_title
 
-    def self.trigger_text(queue, value, count)
-      value_threshold = value_threshold value,
+    def self.trigger_text(status)
+      queue = status[:queue]
+      value = status[:value]
+      count = status[:count]
+      count_threshold = count_threshold value,
                                         queue.threshold_options[value][:count]
       time_threshold = queue.threshold_options[value][:time]
       time = format_time time_threshold
       case value
       when :messages
-        "Message count > #{value_threshold} for #{time}. Current count: #{count}"
+        "Message count > #{count_threshold} for #{time}. Current count: #{count}"
       when :consumers
-        "Consumer count < #{value_threshold} for #{time}. Current count: #{count}"
+        "Consumer count < #{count_threshold} for #{time}. Current count: #{count}"
       end
     end
+    private_class_method :trigger_text
 
-    def self.reset_title(queue, value)
+    def self.reset_title(status)
+      queue = status[:queue]
+      value = status[:value]
       case value
       when :messages
         "[#{queue.name}] Message count is below threshold"
@@ -30,12 +57,15 @@ module RabbitWatcher
         "[#{queue.name}] Consumer count is above threshold"
       end
     end
+    private_class_method :reset_title
 
-    def self.reset_text(count)
+    def self.reset_text(status)
+      count = status[:count]
       "Current count: #{count}"
     end
+    private_class_method :reset_text
 
-    def self.value_threshold(value, count)
+    def self.count_threshold(value, count)
       case value
       when :messages
         count - 1
@@ -43,6 +73,7 @@ module RabbitWatcher
         count + 1
       end
     end
+    private_class_method :count_threshold
 
     def self.format_time(seconds)
       if seconds >= 60
@@ -51,6 +82,7 @@ module RabbitWatcher
         format_seconds seconds
       end
     end
+    private_class_method :format_time
 
     def self.format_minutes(seconds)
       minutes = seconds / 60
@@ -63,10 +95,12 @@ module RabbitWatcher
         "#{minutes} #{minute_suffix}"
       end
     end
+    private_class_method :format_minutes
 
     def self.format_seconds(seconds)
       suffix = seconds == 1 ? 'second' : 'seconds'
       "#{seconds} #{suffix}"
     end
+    private_class_method :format_seconds
   end
 end
