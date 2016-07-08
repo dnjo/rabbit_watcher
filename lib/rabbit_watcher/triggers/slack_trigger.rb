@@ -1,4 +1,5 @@
 require 'httparty'
+require 'rabbit_watcher/trigger'
 require 'rabbit_watcher/message_helper'
 require 'rabbit_watcher/markdown_helper'
 
