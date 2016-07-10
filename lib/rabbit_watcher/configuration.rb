@@ -11,41 +11,36 @@ module RabbitWatcher
     end
 
     def self.triggers(config)
-      config.each_with_object([]) do |trigger_config, triggers|
-        id = trigger_config['id']
+      config.map do |trigger_id, trigger_config|
         type = trigger_config['type']
         trigger_opts = parse_trigger_opts trigger_config
         trigger = init_trigger type.to_sym, trigger_opts
-        triggers.push id: id, trigger: trigger
-      end
+        [trigger_id, trigger]
+      end.to_h
     end
 
     def self.thresholds(config)
-      config.each_with_object([]) do |threshold_config, thresholds|
-        id = threshold_config['id']
+      config.map do |threshold_id, threshold_config|
         threshold_opts = parse_threshold_opts threshold_config
-        thresholds.push id: id, threshold: threshold_opts
-      end
+        [threshold_id, threshold_opts]
+      end.to_h
     end
 
-    def self.queues(config, triggers, thresholds)
-      config.each_with_object([]) do |queue_config, queue_sets|
-        queue_opts = parse_queue_opts queue_config, triggers, thresholds
-        queues = []
-        queue_config['queues'].each do |queue_name|
+    def self.queue_sets(config, triggers, thresholds)
+      config.map do |queue_set_id, queue_set_config|
+        queue_opts = parse_queue_opts queue_set_config, triggers, thresholds
+        queues = queue_set_config['queues'].map do |queue_name|
           opts = queue_opts.merge name: queue_name
-          queue = RabbitWatcher::Queue.new opts
-          queues.push queue
+          RabbitWatcher::Queue.new opts
         end
-        queue_sets.push id: queue_config['id'], queues: queues
-      end
+        [queue_set_id, queues]
+      end.to_h
     end
 
     def self.hosts(config, queue_sets)
-      config.each_with_object([]) do |host_config, hosts|
+      config.map do |host_config|
         opts = parse_host_opts host_config, queue_sets
-        host = RabbitWatcher::Host.new opts
-        hosts.push host
+        RabbitWatcher::Host.new opts
       end
     end
 
@@ -76,7 +71,7 @@ module RabbitWatcher
 
     def self.parse_queue_opts(config, triggers, thresholds)
       {
-        threshold_options: find_thresholds(config, thresholds),
+        threshold_options: find_threshold(config, thresholds),
         triggers: find_triggers(config, triggers)
       }
     end
@@ -93,36 +88,31 @@ module RabbitWatcher
     end
     private_class_method :parse_host_opts
 
-    def self.find_thresholds(config, thresholds)
-      id = config['threshold_options']
-      threshold = find_object id, thresholds
+    def self.find_threshold(config, thresholds)
+      id = config['thresholds']
+      threshold = thresholds[id]
       object_not_found id unless threshold
-      threshold[:threshold]
+      threshold
     end
-    private_class_method :find_thresholds
+    private_class_method :find_threshold
 
     def self.find_triggers(config, triggers)
       config['triggers'].map do |id|
-        trigger = find_object id, triggers
+        trigger = triggers[id]
         object_not_found id unless trigger
-        trigger[:trigger]
+        trigger
       end
     end
     private_class_method :find_triggers
 
     def self.find_queues(config, queue_sets)
       config['queue_sets'].each_with_object([]) do |id, queues|
-        queue_set = find_object id, queue_sets
+        queue_set = queue_sets[id]
         object_not_found id unless queue_set
-        queues.concat queue_set[:queues]
+        queues.concat queue_set
       end
     end
     private_class_method :find_queues
-
-    def self.find_object(id, objects)
-      objects.find { |object| object[:id] == id }
-    end
-    private_class_method :find_object
 
     def self.symbolize_keys(hash)
       return nil unless hash

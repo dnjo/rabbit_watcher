@@ -6,9 +6,9 @@ module RabbitWatcher
     config = Configuration.parse_config_file path
     triggers = parse_triggers config
     thresholds = parse_thresholds config
-    queues = parse_queues config,
-                          triggers,
-                          thresholds
+    queues = parse_queue_sets config,
+                              triggers,
+                              thresholds
     parse_hosts config, queues
   end
 
@@ -18,16 +18,16 @@ module RabbitWatcher
   private_class_method :parse_triggers
 
   def self.parse_thresholds(config)
-    Configuration.thresholds config['threshold_options']
+    Configuration.thresholds config['thresholds']
   end
   private_class_method :parse_thresholds
 
-  def self.parse_queues(config, triggers, thresholds)
-    Configuration.queues config['queue_sets'],
-                         triggers,
-                         thresholds
+  def self.parse_queue_sets(config, triggers, thresholds)
+    Configuration.queue_sets config['queue_sets'],
+                             triggers,
+                             thresholds
   end
-  private_class_method :parse_queues
+  private_class_method :parse_queue_sets
 
   def self.parse_hosts(config, queues)
     Configuration.hosts config['hosts'],

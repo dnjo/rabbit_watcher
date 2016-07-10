@@ -9,7 +9,7 @@ describe RabbitWatcher do
     let(:config) do
       {
         'triggers' => 'triggers_config',
-        'threshold_options' => 'thresholds_config',
+        'thresholds' => 'thresholds_config',
         'queue_sets' => 'queues_config',
         'hosts' => 'hosts_config'
       }
@@ -29,7 +29,7 @@ describe RabbitWatcher do
         .with('thresholds_config')
         .and_return 'thresholds'
       expect(RabbitWatcher::Configuration)
-        .to(receive(:queues))
+        .to(receive(:queue_sets))
         .with('queues_config', 'triggers', 'thresholds')
         .and_return 'queues'
       expect(RabbitWatcher::Configuration)
