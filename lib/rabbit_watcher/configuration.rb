@@ -21,7 +21,7 @@ module RabbitWatcher
 
     def self.thresholds(config)
       config.map do |threshold_id, threshold_config|
-        threshold_opts = parse_threshold_opts threshold_config
+        threshold_opts = symbolize_keys threshold_config
         [threshold_id, threshold_opts]
       end.to_h
     end
@@ -53,21 +53,10 @@ module RabbitWatcher
     private_class_method :init_trigger
 
     def self.parse_trigger_opts(config)
-      {
-        url: config['url'],
-        username: config['username'],
-        icon_emoji: config['icon_emoji']
-      }
+      config_except_type = filter_hash config, %w(type)
+      symbolize_keys config_except_type
     end
     private_class_method :parse_trigger_opts
-
-    def self.parse_threshold_opts(config)
-      {
-        messages: symbolize_keys(config['messages']),
-        consumers: symbolize_keys(config['consumers'])
-      }
-    end
-    private_class_method :parse_threshold_opts
 
     def self.parse_queue_opts(config, triggers, thresholds)
       {
@@ -78,13 +67,10 @@ module RabbitWatcher
     private_class_method :parse_queue_opts
 
     def self.parse_host_opts(config, queue_sets)
-      {
-        uri: config['uri'],
-        username: config['username'],
-        password: config['password'],
-        vhost: config['vhost'],
-        queues: find_queues(config, queue_sets)
-      }
+      queues = find_queues config, queue_sets
+      config_except_queues = filter_hash config, %w(queue_sets)
+      host_opts = config_except_queues.merge queues: queues
+      symbolize_keys host_opts
     end
     private_class_method :parse_host_opts
 
@@ -114,11 +100,19 @@ module RabbitWatcher
     end
     private_class_method :find_queues
 
-    def self.symbolize_keys(hash)
-      return nil unless hash
-      Hash[hash.map { |k, v| [k.to_sym, v] }]
+    def self.symbolize_keys(object)
+      return object unless object.is_a? Hash
+      object.map do |key, value|
+        value = symbolize_keys value
+        [key.to_sym, value]
+      end.to_h
     end
     private_class_method :symbolize_keys
+
+    def self.filter_hash(hash, invalid_keys)
+      hash.select { |k| !invalid_keys.include? k }
+    end
+    private_class_method :filter_hash
 
     def self.object_not_found(id)
       raise InvalidConfiguration, "No object with ID #{id}"
