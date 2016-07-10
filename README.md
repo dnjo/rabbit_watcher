@@ -1,4 +1,4 @@
-# RabbitWatcher
+# RabbitWatcher :rabbit: :eyes:
 
 Watches RabbitMQ queues for message and consumer counts.
 
