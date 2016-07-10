@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Dennis Johansson"]
   spec.email         = ["dennis@dnjo.net"]
 
-  spec.summary       = %q{Gets status for RabbitMQ queues.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Watches RabbitMQ queues for message and consumer counts.}
+  spec.homepage      = "https://github.com/dnjo/rabbit_watcher"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
