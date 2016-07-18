@@ -23,10 +23,11 @@ describe RabbitWatcher::Client do
       expect(status['queue2'][:consumers]).to eq 4
     end
 
-    it 'throws an error on invalid response' do
-      stub_rabbit_request 404, nil
-      expect { request_status }
-        .to raise_error RabbitWatcher::Client::InvalidResponse
+    it 'does not return status of queues with invalid responses' do
+      stub_rabbit_request 404, { error: 'error message' }.to_json
+      status = request_status
+      expect(status['queue1']).to eq nil
+      expect(status['queue2']).to eq nil
     end
   end
 

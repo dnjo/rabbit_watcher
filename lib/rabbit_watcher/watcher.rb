@@ -11,6 +11,7 @@ module RabbitWatcher
     def self.check_queues(host, status)
       host.queues.each do |queue|
         [:messages, :consumers].each do |value|
+          next unless status[queue.name]
           count = status[queue.name][value]
           queue_status = build_queue_status queue, host, value, count
           check_queue_value queue_status

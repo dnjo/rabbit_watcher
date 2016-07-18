@@ -2,8 +2,6 @@ require 'httparty'
 
 module RabbitWatcher
   module Client
-    class InvalidResponse < StandardError; end
-
     def self.status(opts)
       queues = get_queues opts[:queues]
       queues.each_with_object({}) do |queue, status_hash|
@@ -14,8 +12,7 @@ module RabbitWatcher
 
     def self.queue_status(queue, opts)
       response = request_status queue, opts
-      validate_response response
-      parse_status response.parsed_response
+      parse_status response.parsed_response if response
     end
     private_class_method :queue_status
 
@@ -34,7 +31,9 @@ module RabbitWatcher
       RabbitWatcher.logger.debug { "Requesting queue status at URL #{url}" }
       response = HTTParty.get url, opts
       RabbitWatcher.logger.debug { "Queue status response: #{response.parsed_response}"}
-      response
+      return response if response.code == 200
+      RabbitWatcher.logger.error { "Got code #{response.code} while requesting URL #{url}: #{response.parsed_response}" }
+      false
     end
     private_class_method :get
 
@@ -51,12 +50,6 @@ module RabbitWatcher
       }
     end
     private_class_method :build_credentials
-
-    def self.validate_response(response)
-      return if response.code == 200
-      raise InvalidResponse, response
-    end
-    private_class_method :validate_response
 
     def self.parse_status(body)
       {

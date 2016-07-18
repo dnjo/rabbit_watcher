@@ -97,6 +97,17 @@ describe RabbitWatcher::Watcher do
         .with trigger_args(:consumers, consumer_threshold + 1)
       RabbitWatcher::Watcher.watch @host
     end
+
+    it 'does nothing if queue status is missing' do
+      status = { queue_name => nil }
+      expect(RabbitWatcher::Client)
+        .to(receive(:status))
+        .and_return status
+      expect(@queue).not_to receive :update_timestamp
+      expect(trigger).not_to receive :trigger
+      expect(trigger).not_to receive :reset
+      RabbitWatcher::Watcher.watch @host
+    end
   end
 
   def trigger_args(value, count)
