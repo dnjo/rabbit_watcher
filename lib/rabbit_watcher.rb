@@ -1,3 +1,4 @@
+require 'logger'
 require 'rabbit_watcher/version'
 require 'rabbit_watcher/configuration'
 
@@ -10,6 +11,17 @@ module RabbitWatcher
                               triggers,
                               thresholds
     parse_hosts config, queues
+  end
+
+  def self.configure(opts)
+    @logger = opts[:logger]
+  end
+
+  def self.logger
+    return @logger if @logger
+    @logger = Logger.new STDOUT
+    @logger.level = Logger::INFO
+    @logger
   end
 
   def self.parse_triggers(config)
@@ -30,8 +42,7 @@ module RabbitWatcher
   private_class_method :parse_queue_sets
 
   def self.parse_hosts(config, queues)
-    Configuration.hosts config['hosts'],
-                        queues
+    Configuration.hosts config['hosts'], queues
   end
   private_class_method :parse_hosts
 end

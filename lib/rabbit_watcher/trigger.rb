@@ -3,14 +3,22 @@ module RabbitWatcher
     def trigger(status)
       queue = status[:queue]
       value = status[:value]
-      handle_trigger status unless triggered? queue, value
+      unless triggered? queue, value
+        RabbitWatcher.logger.info { "Triggering queue #{queue.name}" }
+        RabbitWatcher.logger.debug { "Status: #{status}" }
+        handle_trigger status unless triggered? queue, value
+      end
       set_trigger_value queue, value, true
     end
 
     def reset(status)
       queue = status[:queue]
       value = status[:value]
-      handle_reset status if triggered? queue, value
+      if triggered? queue, value
+        RabbitWatcher.logger.info { "Resetting queue #{queue.name}" }
+        RabbitWatcher.logger.debug { "Status: #{status}" }
+        handle_reset status if triggered? queue, value
+      end
       set_trigger_value queue, value, false
     end
 

@@ -3,6 +3,7 @@ require 'rabbit_watcher/client'
 module RabbitWatcher
   module Watcher
     def self.watch(host)
+      RabbitWatcher.logger.info { "Watching host #{host.uri}" }
       status = get_status host
       check_queues host, status
     end

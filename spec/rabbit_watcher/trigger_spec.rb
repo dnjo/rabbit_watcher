@@ -10,10 +10,11 @@ describe RabbitWatcher::Trigger do
 
   before(:each) { @trigger = InheritedTrigger.new }
 
+  let(:queue) { instance_double RabbitWatcher::Queue, name: 'queue' }
   let(:trigger_args) do
     {
       host: 'host',
-      queue: 'queue',
+      queue: queue,
       value: :value,
       count: 1
     }

@@ -7,27 +7,41 @@ module RabbitWatcher
     def self.status(opts)
       queues = get_queues opts[:queues]
       queues.each_with_object({}) do |queue, status_hash|
-        response = request_status queue, opts
-        validate_response response
-        queue_status = parse_status response.parsed_response
-        status_hash[queue] = queue_status
+        status = queue_status queue, opts
+        status_hash[queue] = status
       end
     end
 
+    def self.queue_status(queue, opts)
+      response = request_status queue, opts
+      validate_response response
+      parse_status response.parsed_response
+    end
+    private_class_method :queue_status
+
     def self.request_status(queue, opts)
-      path = build_path queue, opts
+      url = build_url queue, opts
       credentials = build_credentials opts
-      get_opts = {}
-      get_opts[:headers] = { 'Accept' => 'application/json' }
+      get_opts = {
+        headers: { 'Accept' => 'application/json' }
+      }
       get_opts[:basic_auth] = credentials if credentials
-      HTTParty.get path, get_opts
+      get url, get_opts
     end
     private_class_method :request_status
 
-    def self.build_path(queue, opts)
+    def self.get(url, opts)
+      RabbitWatcher.logger.debug { "Requesting queue status at URL #{url}" }
+      response = HTTParty.get url, opts
+      RabbitWatcher.logger.debug { "Queue status response: #{response.parsed_response}"}
+      response
+    end
+    private_class_method :get
+
+    def self.build_url(queue, opts)
       "#{opts[:uri]}/api/queues/#{opts[:vhost]}/#{queue}"
     end
-    private_class_method :build_path
+    private_class_method :build_url
 
     def self.build_credentials(opts)
       return nil unless opts[:username]
