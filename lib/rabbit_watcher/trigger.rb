@@ -1,32 +1,52 @@
 module RabbitWatcher
   class Trigger
     def trigger(status)
-      queue = status[:queue]
-      value = status[:value]
-      unless triggered? queue, value
-        RabbitWatcher.logger.info { "Triggering queue #{queue.name}" }
-        RabbitWatcher.logger.debug { "Status: #{status}" }
-        handle_trigger status unless triggered? queue, value
-      end
-      set_trigger_value queue, value, true
+      handle_action status, :trigger
     end
 
     def reset(status)
-      queue = status[:queue]
-      value = status[:value]
-      if triggered? queue, value
-        RabbitWatcher.logger.info { "Resetting queue #{queue.name}" }
-        RabbitWatcher.logger.debug { "Status: #{status}" }
-        handle_reset status if triggered? queue, value
-      end
-      set_trigger_value queue, value, false
+      handle_action status, :reset
     end
 
     private
 
-    def set_trigger_value(queue, value, triggered)
+    def handle_action(status, action)
+      queue = status[:queue]
+      value = status[:value]
+      triggered = triggered? queue, value
+      call_actions status, action, triggered
+      set_trigger_value queue, value, action
+    end
+
+    def call_actions(status, action, triggered)
+      case action
+      when :trigger
+        call_trigger status unless triggered
+      when :reset
+        call_reset status if triggered
+      end
+    end
+
+    def call_trigger(status)
+      RabbitWatcher.logger.info { "Triggering queue #{status[:queue].name}" }
+      RabbitWatcher.logger.debug { "Status: #{status}" }
+      handle_trigger status
+    end
+
+    def call_reset(status)
+      RabbitWatcher.logger.info { "Resetting queue #{status[:queue].name}" }
+      RabbitWatcher.logger.debug { "Status: #{status}" }
+      handle_reset status
+    end
+
+    def set_trigger_value(queue, value, action)
       values = values queue
-      values[value] = triggered
+      case action
+      when :trigger
+        values[value] = true
+      when :reset
+        values[value] = false
+      end
     end
 
     def triggered?(queue, value)
