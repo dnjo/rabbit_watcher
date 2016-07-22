@@ -11,16 +11,23 @@ describe RabbitWatcher::Client do
 
   describe '.status' do
     it 'returns the status of queues' do
-      body = {
+      queue1 = {
+        'name' => queues[0],
         'messages_ready' => 100,
         'consumers' => 4
-      }.to_json
+      }
+      queue2 = {
+        'name' => queues[1],
+        'messages_ready' => 50,
+        'consumers' => 1
+      }
+      body = [queue1, queue2].to_json
       stub_rabbit_request 200, body
       status = request_status
       expect(status['queue1'][:messages]).to eq 100
       expect(status['queue1'][:consumers]).to eq 4
-      expect(status['queue2'][:messages]).to eq 100
-      expect(status['queue2'][:consumers]).to eq 4
+      expect(status['queue2'][:messages]).to eq 50
+      expect(status['queue2'][:consumers]).to eq 1
     end
 
     it 'does not return status of queues with invalid responses' do
@@ -36,7 +43,7 @@ describe RabbitWatcher::Client do
       'Accept' => 'application/json',
       'Authorization' => 'Basic dGVzdHVzZXI6dGVzdHBhc3M='
     }
-    stub_request(:get, %r{#{uri}/api/queues/#{vhost}/queue})
+    stub_request(:get, %r{#{uri}/api/queues/#{vhost}})
       .with(headers: request_headers)
       .to_return status: status,
                  body: body,
