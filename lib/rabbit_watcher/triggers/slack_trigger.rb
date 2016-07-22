@@ -10,6 +10,7 @@ module RabbitWatcher
         @url = opts[:url]
         @username = opts[:username] || 'Rabbit Watcher'
         @icon_emoji = opts[:icon_emoji] || ':rabbit2:'
+        super()
       end
 
       def handle_trigger(status)
@@ -46,9 +47,10 @@ module RabbitWatcher
       def build_slack_text(trigger_type, status)
         queue = status[:queue]
         count = status[:count]
+        trigger_id = status[:trigger_id]
         trigger_text = MessageHelper.text trigger_type, status
-        prefixes = %w(Queue: Trigger: Count:)
-        texts = [queue.name, trigger_text, count]
+        prefixes = %w(Queue: Trigger: Trigger\ ID: Count:)
+        texts = [queue.name, trigger_text, trigger_id, count]
         MarkdownHelper.bold_prefixes prefixes, texts
       end
 

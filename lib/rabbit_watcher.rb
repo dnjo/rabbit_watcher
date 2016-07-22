@@ -1,8 +1,11 @@
 require 'logger'
 require 'rabbit_watcher/version'
 require 'rabbit_watcher/configuration'
+require 'rabbit_watcher/counter'
 
 module RabbitWatcher
+  @trigger_counter = Counter.new
+
   def self.configure_hosts(path)
     config = Configuration.parse_config_file path
     triggers = parse_triggers config
@@ -22,6 +25,10 @@ module RabbitWatcher
     @logger = Logger.new STDOUT
     @logger.level = Logger::INFO
     @logger
+  end
+
+  def self.trigger_counter
+    @trigger_counter
   end
 
   def self.parse_triggers(config)
