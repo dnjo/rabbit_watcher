@@ -10,7 +10,8 @@ describe RabbitWatcher::Watcher do
   let(:username) { 'testuser' }
   let(:password) { 'testpass' }
   let(:vhost) { 'vhost' }
-  let(:queue_name) { 'queue1' }
+  let(:queue_name) { '-suffix$' }
+  let(:status_name) { 'name-suffix' }
   let(:message_threshold) { 100 }
   let(:consumer_threshold) { 0 }
   let(:trigger) { RabbitWatcher::Trigger.new }
@@ -57,10 +58,10 @@ describe RabbitWatcher::Watcher do
       stub_client message_threshold - 1, consumer_threshold + 1
       expect(@queue)
         .to(receive(:update_timestamp))
-        .with :messages
+        .with status_name, :messages
       expect(@queue)
         .to(receive(:update_timestamp))
-        .with :consumers
+        .with status_name, :consumers
       RabbitWatcher::Watcher.watch @host
     end
 
@@ -99,7 +100,7 @@ describe RabbitWatcher::Watcher do
     end
 
     it 'does nothing if queue status is missing' do
-      status = { queue_name => nil }
+      status = []
       expect(RabbitWatcher::Client)
         .to(receive(:status))
         .and_return status
@@ -114,18 +115,20 @@ describe RabbitWatcher::Watcher do
     {
       host: @host,
       queue: @queue,
+      name: status_name,
       value: value,
       count: count
     }
   end
 
   def client_status(message_threshold, consumer_threshold)
-    {
-      queue_name => {
+    [
+      {
+        name: status_name,
         messages: message_threshold,
         consumers: consumer_threshold
       }
-    }
+    ]
   end
 
   def stub_client(message_threshold, consumer_threshold)

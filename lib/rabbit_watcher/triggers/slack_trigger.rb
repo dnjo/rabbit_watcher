@@ -37,25 +37,25 @@ module RabbitWatcher
       end
 
       def build_post_message(trigger_type, status)
-        queue = status[:queue]
+        queue_name = status[:name]
         host = status[:host]
         title = MessageHelper.title trigger_type, status
         text = build_slack_text trigger_type, status
-        build_slack_message title, text, trigger_type, host, queue
+        build_slack_message title, text, trigger_type, host, queue_name
       end
 
       def build_slack_text(trigger_type, status)
-        queue = status[:queue]
+        queue_name = status[:name]
         count = status[:count]
         trigger_id = status[:trigger_id]
         trigger_text = MessageHelper.text trigger_type, status
         prefixes = %w(Queue: Trigger: Trigger\ ID: Count:)
-        texts = [queue.name, trigger_text, trigger_id, count]
+        texts = [queue_name, trigger_text, trigger_id, count]
         MarkdownHelper.bold_prefixes prefixes, texts
       end
 
-      def build_slack_message(title, text, trigger_type, host, queue)
-        title_link = queue_url host, queue
+      def build_slack_message(title, text, trigger_type, host, queue_name)
+        title_link = queue_url host, queue_name
         {
           username: @username,
           icon_emoji: @icon_emoji,
@@ -79,10 +79,10 @@ module RabbitWatcher
         }
       end
 
-      def queue_url(host, queue)
+      def queue_url(host, queue_name)
         uri = host.uri
         vhost = host.vhost
-        "#{uri}/#/queues/#{vhost}/#{queue.name}"
+        "#{uri}/#/queues/#{vhost}/#{queue_name}"
       end
     end
   end

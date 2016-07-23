@@ -2,26 +2,31 @@ module RabbitWatcher
   class Queue
     attr_reader :name,
                 :threshold_options,
-                :triggers,
-                :timestamps
+                :triggers
 
     def initialize(opts)
       @name = opts[:name]
       @threshold_options = opts[:threshold_options]
       @triggers = opts[:triggers]
-      @timestamps = init_timestamps
+      @timestamps = {}
     end
 
-    def update_timestamp(value)
-      timestamps[value] = Time.now
+    def update_timestamp(name, value)
+      key = timestamp_key name, value
+      @timestamps[key] = Time.now
+    end
+
+    def timestamp(name, value)
+      key = timestamp_key name, value
+      @timestamps[key] ||= Time.now
     end
 
     private
 
-    def init_timestamps
+    def timestamp_key(name, value)
       {
-        messages: Time.now,
-        consumers: Time.now
+        name: name,
+        value: value
       }
     end
   end

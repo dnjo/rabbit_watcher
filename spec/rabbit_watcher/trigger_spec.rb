@@ -72,6 +72,7 @@ describe RabbitWatcher::Trigger do
     {
       host: 'host',
       queue: queue,
+      name: 'queue',
       value: :value,
       count: 1
     }

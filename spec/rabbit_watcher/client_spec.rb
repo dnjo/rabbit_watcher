@@ -24,17 +24,18 @@ describe RabbitWatcher::Client do
       body = [queue1, queue2].to_json
       stub_rabbit_request 200, body
       status = request_status
-      expect(status['queue1'][:messages]).to eq 100
-      expect(status['queue1'][:consumers]).to eq 4
-      expect(status['queue2'][:messages]).to eq 50
-      expect(status['queue2'][:consumers]).to eq 1
+      expect(status[0][:name]).to eq queues[0]
+      expect(status[0][:messages]).to eq 100
+      expect(status[0][:consumers]).to eq 4
+      expect(status[1][:name]).to eq queues[1]
+      expect(status[1][:messages]).to eq 50
+      expect(status[1][:consumers]).to eq 1
     end
 
-    it 'does not return status of queues with invalid responses' do
+    it 'returns empty array on invalid response' do
       stub_rabbit_request 404, { error: 'error message' }.to_json
       status = request_status
-      expect(status['queue1']).to eq nil
-      expect(status['queue2']).to eq nil
+      expect(status).to eq []
     end
   end
 

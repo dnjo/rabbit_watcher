@@ -2,8 +2,8 @@ module RabbitWatcher
   module MessageHelper
     def self.title(_trigger_type, status)
       host = status[:host]
-      queue = status[:queue]
-      "#{host.uri} (#{queue.name})"
+      queue_name = status[:name]
+      "#{host.uri} (#{queue_name})"
     end
 
     def self.text(trigger_type, status)

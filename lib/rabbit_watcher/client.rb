@@ -8,7 +8,7 @@ module RabbitWatcher
 
     def self.queue_status(opts)
       response = request_status opts
-      return {} unless response
+      return [] unless response
       parse_status response.parsed_response
     end
     private_class_method :queue_status
@@ -49,11 +49,11 @@ module RabbitWatcher
     private_class_method :build_credentials
 
     def self.parse_status(body)
-      body.each_with_object({}) do |queue_status, status|
-        name = queue_status['name']
-        status[name] = {
-          messages: queue_status['messages_ready'],
-          consumers: queue_status['consumers']
+      body.map do |queue|
+        {
+          name: queue['name'],
+          messages: queue['messages_ready'],
+          consumers: queue['consumers']
         }
       end
     end
