@@ -11,12 +11,23 @@ module RabbitWatcher
     def self.check_queues(host, status)
       queues = find_matching_queues host.queues, status
       queues.each do |queue|
+        handle_matching_statuses queue[:queue], queue[:matching_statuses]
         queue[:matching_statuses].each do |matching_status|
           check_values matching_status, host, queue[:queue]
         end
       end
     end
     private_class_method :check_queues
+
+    def self.handle_matching_statuses(queue, statuses)
+      if statuses.empty?
+        RabbitWatcher.logger.warn { "Found no queues matching #{queue} in status response" }
+      else
+        names = statuses.map { |s| s[:name] }.join ', '
+        RabbitWatcher.logger.info { "Checking queue status for #{names}" }
+      end
+    end
+    private_class_method :handle_matching_statuses
 
     def self.check_values(status, host, queue)
       [:messages, :consumers].each do |value|
