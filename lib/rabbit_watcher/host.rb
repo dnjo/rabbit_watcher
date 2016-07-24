@@ -13,5 +13,9 @@ module RabbitWatcher
       @vhost = opts[:vhost]
       @queues = opts[:queues]
     end
+
+    def to_s
+      "#{@uri} (vhost #{@vhost})"
+    end
   end
 end

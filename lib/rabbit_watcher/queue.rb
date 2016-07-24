@@ -21,6 +21,10 @@ module RabbitWatcher
       @timestamps[key] ||= Time.now
     end
 
+    def to_s
+      @name
+    end
+
     private
 
     def timestamp_key(name, value)
