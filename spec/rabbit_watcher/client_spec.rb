@@ -23,7 +23,7 @@ describe RabbitWatcher::Client do
       }
       body = [queue1, queue2].to_json
       stub_rabbit_request 200, body
-      status = request_status
+      status = request_status request_opts
       expect(status[0][:name]).to eq queues[0]
       expect(status[0][:messages]).to eq 100
       expect(status[0][:consumers]).to eq 4
@@ -34,28 +34,44 @@ describe RabbitWatcher::Client do
 
     it 'returns empty array on invalid response' do
       stub_rabbit_request 404, { error: 'error message' }.to_json
-      status = request_status
+      status = request_status request_opts
       expect(status).to eq []
+    end
+
+    it 'only requests specific columns' do
+      url = %r{#{uri}/api/queues/#{vhost}\?columns=column1,column2}
+      body = [{}].to_json
+      opts = request_opts
+      opts[:columns] = %w(column1 column2)
+      stub_rabbit_request 200, body, url
+      request_status opts
     end
   end
 
-  def stub_rabbit_request(status, body)
+  def stub_rabbit_request(status, body, url = nil)
+    url ||= %r{#{uri}/api/queues/#{vhost}.*}
     request_headers = {
       'Accept' => 'application/json',
       'Authorization' => 'Basic dGVzdHVzZXI6dGVzdHBhc3M='
     }
-    stub_request(:get, %r{#{uri}/api/queues/#{vhost}})
+    stub_request(:get, url)
       .with(headers: request_headers)
       .to_return status: status,
                  body: body,
                  headers: { 'Content-Type' => 'application/json' }
   end
 
-  def request_status
-    RabbitWatcher::Client.status uri: uri,
-                                 username: username,
-                                 password: password,
-                                 vhost: vhost,
-                                 queues: queues
+  def request_status(opts)
+    RabbitWatcher::Client.status opts
+  end
+
+  def request_opts
+    {
+      uri: uri,
+      username: username,
+      password: password,
+      vhost: vhost,
+      queues: queues
+    }
   end
 end

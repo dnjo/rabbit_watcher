@@ -45,7 +45,8 @@ describe RabbitWatcher::Watcher do
         username: username,
         password: password,
         vhost: vhost,
-        queues: [queue_name]
+        queues: [queue_name],
+        columns: %w(name messages_ready consumers)
       }
       expect(RabbitWatcher::Client)
         .to(receive(:status))

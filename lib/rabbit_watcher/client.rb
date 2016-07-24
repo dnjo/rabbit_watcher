@@ -35,7 +35,10 @@ module RabbitWatcher
     private_class_method :get
 
     def self.build_url(opts)
-      "#{opts[:uri]}/api/queues/#{opts[:vhost]}"
+      columns = build_columns opts
+      url = "#{opts[:uri]}/api/queues/#{opts[:vhost]}"
+      url << "?columns=#{columns}" if columns
+      url
     end
     private_class_method :build_url
 
@@ -58,5 +61,11 @@ module RabbitWatcher
       end
     end
     private_class_method :parse_status
+
+    def self.build_columns(opts)
+      return nil unless opts[:columns]
+      opts[:columns].join ','
+    end
+    private_class_method :build_columns
   end
 end

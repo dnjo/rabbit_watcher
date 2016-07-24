@@ -122,7 +122,8 @@ module RabbitWatcher
                     username: host.username,
                     password: host.password,
                     vhost: host.vhost,
-                    queues: queue_names
+                    queues: queue_names,
+                    columns: %w(name messages_ready consumers)
     end
     private_class_method :get_status
   end
