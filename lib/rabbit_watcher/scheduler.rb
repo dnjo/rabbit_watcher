@@ -9,10 +9,21 @@ module RabbitWatcher
       scheduler = Rufus::Scheduler.new
       opts[:hosts].each do |host|
         scheduler.every opts[:watch_interval] do
-          Watcher.watch host
+          watch host
         end
       end
       scheduler.join
     end
+
+    def self.watch(host)
+      Watcher.watch host
+    rescue => e
+      RabbitWatcher.logger.error do
+        backtrace = e.backtrace.join "\n\t"
+        "An error occurred while watching host #{host}: #{e}" \
+        "\n\t#{backtrace}"
+      end
+    end
+    private_class_method :watch
   end
 end
