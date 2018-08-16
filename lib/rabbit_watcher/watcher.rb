@@ -77,7 +77,7 @@ module RabbitWatcher
       value = :consumers
       threshold = queue.threshold_options[value][:count]
       less_than_threshold = queue.threshold_options[value][:less_than_count]
-      more_than_ok = count > threshold
+      more_than_ok = threshold.nil? ? true : count > threshold
       if less_than_threshold.nil? || !more_than_ok
         build_count_result more_than_ok, value, :more_than
       else

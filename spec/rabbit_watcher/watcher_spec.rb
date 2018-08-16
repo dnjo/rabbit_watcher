@@ -70,7 +70,6 @@ describe RabbitWatcher::Watcher do
       less_than_threshold = 2
       threshold_options = {
         consumers: {
-          count: 0,
           time: 300,
           less_than_count: less_than_threshold
         }
