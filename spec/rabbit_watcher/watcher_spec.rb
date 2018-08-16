@@ -27,14 +27,8 @@ describe RabbitWatcher::Watcher do
         time: 300
       }
     }
-    @queue = RabbitWatcher::Queue.new name: queue_name,
-                                      threshold_options: threshold_options,
-                                      triggers: [trigger]
-    @host = RabbitWatcher::Host.new uri: uri,
-                                    username: username,
-                                    password: password,
-                                    vhost: vhost,
-                                    queues: [@queue]
+    @queue = configure_queue threshold_options
+    @host = configure_host @queue
   end
 
   describe '.watch' do
@@ -72,13 +66,31 @@ describe RabbitWatcher::Watcher do
       RabbitWatcher::Watcher.watch @host
     end
 
+    it 'supports consumer less than operator condition' do
+      less_than_threshold = 2
+      threshold_options = {
+        consumers: {
+          count: 0,
+          time: 300,
+          less_than_count: less_than_threshold
+        }
+      }
+      queue = configure_queue threshold_options
+      host = configure_host queue
+      initial_timestamp = queue.timestamp status_name, :consumers
+      stub_client message_threshold, less_than_threshold
+      RabbitWatcher::Watcher.watch host
+      updated_timestamp = queue.timestamp status_name, :consumers
+      expect(updated_timestamp).to eq initial_timestamp
+    end
+
     it 'calls queue triggers when outside time threshold' do
       expect(trigger)
         .to(receive(:trigger))
-        .with trigger_args(:messages, message_threshold)
+        .with trigger_args(:messages, message_threshold, :less_than)
       expect(trigger)
         .to(receive(:trigger))
-        .with trigger_args(:consumers, consumer_threshold)
+        .with trigger_args(:consumers, consumer_threshold, :more_than)
       now = Time.now
       one_hour_ago = Time.now - 3600
       stub_now one_hour_ago
@@ -93,10 +105,10 @@ describe RabbitWatcher::Watcher do
       stub_client message_threshold - 1, consumer_threshold + 1
       expect(trigger)
         .to(receive(:reset))
-        .with trigger_args(:messages, message_threshold - 1)
+        .with trigger_args(:messages, message_threshold - 1, :less_than)
       expect(trigger)
         .to(receive(:reset))
-        .with trigger_args(:consumers, consumer_threshold + 1)
+        .with trigger_args(:consumers, consumer_threshold + 1, :more_than)
       RabbitWatcher::Watcher.watch @host
     end
 
@@ -112,13 +124,14 @@ describe RabbitWatcher::Watcher do
     end
   end
 
-  def trigger_args(value, count)
+  def trigger_args(value, count, operator)
     {
       host: @host,
       queue: @queue,
       name: status_name,
       value: value,
-      count: count
+      count: count,
+      operator: operator
     }
   end
 
@@ -143,5 +156,19 @@ describe RabbitWatcher::Watcher do
     allow(Time)
       .to(receive(:now))
       .and_return time
+  end
+
+  def configure_queue(threshold_options)
+      RabbitWatcher::Queue.new name: queue_name,
+          threshold_options: threshold_options,
+          triggers: [trigger]
+  end
+
+  def configure_host(queue)
+      RabbitWatcher::Host.new uri: uri,
+          username: username,
+          password: password,
+          vhost: vhost,
+          queues: [queue]
   end
 end

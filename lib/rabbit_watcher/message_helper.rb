@@ -18,11 +18,12 @@ module RabbitWatcher
     def self.trigger_text(status)
       queue = status[:queue]
       value = status[:value]
+      operator = status[:operator]
       count_threshold = count_threshold value,
                                         queue.threshold_options[value][:count]
       time_threshold = queue.threshold_options[value][:time]
       time_text = format_time_text time_threshold
-      value_text = format_value_text value, count_threshold
+      value_text = format_value_text value, count_threshold, operator
       [value_text, time_text].reject(&:empty?).join ' '
     end
     private_class_method :trigger_text
@@ -31,9 +32,9 @@ module RabbitWatcher
       value = status[:value]
       case value
       when :messages
-        'Message count is below threshold'
+        'Message count is OK'
       when :consumers
-        'Consumer count is above threshold'
+        'Consumer count is OK'
       end
     end
     private_class_method :reset_text
@@ -55,12 +56,13 @@ module RabbitWatcher
     end
     private_class_method :format_time_text
 
-    def self.format_value_text(value, count_threshold)
+    def self.format_value_text(value, count_threshold, operator)
       case value
       when :messages
         "Message count > #{count_threshold}"
       when :consumers
-        "Consumer count < #{count_threshold}"
+        operator_string = operator == :less_than ? '>' : '<'
+        "Consumer count #{operator_string} #{count_threshold}"
       end
     end
     private_class_method :format_value_text
